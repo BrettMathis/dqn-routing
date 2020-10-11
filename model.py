@@ -30,16 +30,16 @@ class net:
     next_name=0
 
 # port_dic:
-# 'name' -> [x,y,is_source]
+# 'name' -> [x,y]
     def __init__(self,port_dic):
         for a,b in port_dic:
-            if b[-1]:
+            if a[0]==0:
                 self.p=a
                 dist=0
             else:
                 self.k.append(a)
                 dist=-1
-            self.v[a]=[*b[:2],dist,[0,1]]
+            self.v[a]=[*b[:2],dist,1,[0,1]]
         for a in self.k:
             self.close[a]=self.p
         next_name+=len(list(port_dic.keys()))
