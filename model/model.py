@@ -37,6 +37,9 @@ class net:
         ret+="Edges\n"
         for e in self.e:
             ret+=str(e)+'\n'
+        ret+="Closest vertices to sinks\n"
+        for name,c in self.close.items():
+            ret+=str(name)+' -> '+str(c)+'\n'
         return ret
 
 
@@ -45,6 +48,8 @@ class net:
 # first element is source
     def __init__(self,port_list):
         tmpflag=True
+        # Defining k like that in case we later decide to remove self.k
+        k=[]
         for b in port_list:
             a = self.next_name
             if tmpflag:
@@ -52,12 +57,13 @@ class net:
                 dist=0
                 tmpflag=False
             else:
-                self.k.append(a)
+                k.append(a)
                 dist=-1
             self.v[a]=[*b,dist,1,[0,1]]
             self.next_name+=1
-        for a in self.close:
-            self.close[a]=[self.p,Mdist(b,self.v[a][:2])]
+        for a in k:
+            self.close[a]=[self.p,Mdist(self.v[self.p],self.v[a][:2])]
+        self.k=k
 
     def _make_v(self,new_v):
         new_name = self.next_name
@@ -78,9 +84,10 @@ class net:
     # - Weighted sum of currently-routed wire segments along the shortest path
     # - As-of-yet-unrouted distance scaled up by the OPEN_CIRCUIT_K parameter
     def imped(self,v):
-        c = self.close(v)
-        ret = Mdist(self.v[v][0:2],self.v[c][0:2])*params.OCK
-        ret += self.shortest(c)
+        c = self.close[v]
+        ret = c[1]*params.GSQ*params.OCK
+        ret += self.shortest(c[0])
+        return ret
 
     # Sum of impedances from source to all sinks
     # This is a piss-poor loss function
@@ -114,32 +121,15 @@ class net:
             ret.append('W')
         return ret
 
-    # Via up
-    def up(self,v):
-        [X,Y,dist,aL,L]=self.v[v][:]
-        aL+=1
-        if aL not in L:
-            L = L+[aL]
-        self.v[v]=[X,Y,dist,aL,L]
-        return v
-
-    # Via down
-    def down(self,v):
-        [X,Y,dist,aL,L]=self.v[v][:]
-        aL-=1
-        if aL not in L:
-            L = [aL]+L
-        self.v[v]=[X,Y,dist,aL,L]
-        return v
-
     # General move function for all directions
     # If possible, extend the previous net and just move this vertex
     def move(self,v,man_dir):
         # Grab vertex info
-        [X,Y,dist,aL,L] = self.v[v]
+        [X,Y,dist,aL,L] = self.v[v][:]
 
         # We can go ahead and update the distance-from-source now
-        dist += params.GSQ * params.MI[aL]
+        if man_dir not in ['up','down']:
+            dist += params.GSQ * params.MI[aL]
 
         # We can also go ahead and update the position
         if man_dir=='N':
@@ -151,25 +141,40 @@ class net:
         if man_dir=='W':
             X-=params.GSQ
 
+        # We can go ahead and update the active metal layer
+        if man_dir=='up':
+            aL+=1
+            if aL not in L:
+                L = L+[aL]
+        if man_dir=='down':
+            aL-=1
+            if aL not in L:
+                L = [aL]+L
+
+        # Place-holder
+        new_name=-1
+
         # Grab the edge that terminates in this node
         prev_e = self.edict.get(v,[0,0,'',0])
 
         # If we can extend the edge
-        if prev_e[-1] == aL:
+        if prev_e[-1] == aL or man_dir in ['up','down']:
         # Just move the vertex :)
+            new_name=v
             self.v[v]=[X,Y,dist,aL,L]
-            return v
-
+        else:
         # If we cannot extend the edge, make a new vertex and edge
-        # 1 of 1 places where new v are made
-        new_name=self._make_v([X,Y,dist,aL,[aL]])
+            # 1 of 1 places where new v are made
+            new_name=self._make_v([X,Y,dist,aL,[aL]])
 
-        # 1 of 1 places where new e are made
-        self._make_e([v,new_name,aL])
+            # 1 of 1 places where new e are made
+            self._make_e([v,new_name,aL])
 
         # Update self.close
         for a in self.close:
-            new_dist = Mdist(self.v[v][0:2],self.v[a][0:2])
+            new_dist = Mdist(self.v[new_name][0:2],self.v[a][0:2])
+            # Vertical distance
+            new_dist += max([0,self.v[new_name][-1][0]-1])
             if new_dist < self.close[a][-1]:
                 self.close[a]=[new_name,new_dist]
 
@@ -183,3 +188,7 @@ class net:
         return self.move(v,'W')
     def E(self,v):
         return self.move(v,'E')
+    def up(self,v):
+        return self.move(v,'up')
+    def down(self,v):
+        return self.move(v,'down')

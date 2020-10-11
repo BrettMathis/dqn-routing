@@ -19,7 +19,7 @@ OCK = OPEN_CIRCUIT_K
 # in the future these should be automatically read from LEF/DEF maybe
 
 MAX_METAL = 5
-METAL_IMPEDANCE = [3,2,2,1,1]
+METAL_IMPEDANCE = [-1,3,2,2,1,1]
 
 GRID_X = 100
 GRID_Y = 100
