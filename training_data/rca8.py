@@ -32,7 +32,7 @@ def make_rca8():
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
-	rca8 = [[None for i in range(params.grid_y)] for i in range(params.grid_x)];
+	rca8 = [[None for i in range(grid_y)] for i in range(grid_x)];
 	
 	#bookkeeping
 	gate_number = 1;
