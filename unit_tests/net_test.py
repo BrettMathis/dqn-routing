@@ -3,9 +3,9 @@
 import sys
 sys.path.append("..")
 
-from model import model,params
+from model import net,params
 
-net = model.net([[5,5],[0,0],[10,10]])
+net = net.net([[5,5],[0,0],[10,10]])
 print(net)
 assert net.v[0][:2]==[5,5]
 assert net.next_name==3
@@ -64,4 +64,4 @@ net.N(4)
 net.N(4)
 print(net.down(4))
 print(net)
-print(net.imped(2))
+assert net.imped(2)==7*params.MI[2]+3*params.MI[1]

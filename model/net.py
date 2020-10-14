@@ -178,7 +178,7 @@ class net:
             if new_dist < self.close[a][-1]:
                 self.close[a]=[new_name,new_dist]
 
-        return new_name
+        return (new_name,self.v[new_name])
 
     def N(self,v):
         return self.move(v,'N')
