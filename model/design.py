@@ -4,9 +4,6 @@ import sys,math
 
 from model import params, net
 
-def scale_congestion(x):
-    return (math.exp(x)-1)
-
 # Basically a 2-dimensional matrix
 class design:
     
@@ -172,6 +169,11 @@ class design:
         # Need to implement switch
         pass
 
+    def scale_congestion(self,state,x,y,L):
+        cong=state[x][y][L]
+        ret=math.exp(cong/params.MT[L])-1
+        return ret
+
     def global_loss(self,state):
         ret1=0
         ret2=0
@@ -179,8 +181,8 @@ class design:
             ret1+=n.loss()
         for x in range(self.xdim):
             for y in range(self.ydim):
-                for L in range(params.MM):
-                    ret2+=scale_congestion(state[x][y][L])
+                for L in range(1,params.MM):
+                    ret2+=self.scale_congestion(state,x,y,L)
         # Average it out. No need, but it does lower the number.
         # Maybe normalizing is good because nets vs congestion.
         ret1 = ret1/len(self.nets)
@@ -188,4 +190,18 @@ class design:
 #        ret2 = ret2/self.ydim
         return ret1+ret2
 
+    def switching_factor(self):
+        ret={}
+        [active_n,active_v] = self.active
+        v_coords = self.nets[active_n].v[active_v][:2]
+        for n_name,n in self.nets.items():
+            for v_name,v in n.v.items():
+                if v_name in n.close:
+                    continue
+                if active_n==n_name and active_v==v_name:
+                    continue
+                key=n_name+"_"+str(v_name)
+                key_coords=v[:2]
+                ret[key]=n.loss()/max([net.Mdist(v_coords,key_coords),1])
+        return ret
 

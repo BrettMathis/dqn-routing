@@ -27,6 +27,7 @@ netlist.append(["cell2","AND",{"A":"net1","B":"net3","Y":"net2"}])
 
 des = design.design(DEF,stdcells,nets,netlist)
 
+
 for n in des.nets.values():
     print(n)
 
@@ -43,31 +44,26 @@ print(des.global_loss(state))
 
 print(des.nets["net1"].loss())
 print(des.global_loss(state))
+print(des.switching_factor())
 print(des.nets["net1"])
 
 des.do_action("N")
 print(des.nets["net1"].loss())
 print(des.global_loss(state))
+print(des.switching_factor())
 print(des.nets["net1"])
 des.do_action("N")
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
-print(des.nets["net1"])
 des.do_action("N")
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
-print(des.nets["net1"])
+des.do_action("E")
+des.do_action("E")
+des.do_action("N")
+des.do_action("N")
+des.do_action("E")
+des.do_action("E")
 des.do_action("E")
 print(des.nets["net1"].loss())
 print(des.global_loss(state))
-print(des.nets["net1"])
-des.do_action("E")
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
-print(des.nets["net1"])
-des.do_action("N")
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
+print(des.switching_factor())
 print(des.nets["net1"])
 
 #for a in des.nets.values():
