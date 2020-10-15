@@ -5,8 +5,17 @@ sys.path.append("..")
 from model import params
 from gates import *
 
-#RCA datapath is literally just 8 full adders in series
-def make_rca8():
+#The carry skip adder datapath is similar in implementation to an RCA.
+#The main difference is that the RCA datapath is broken up into sections 
+#for which the carry out is generated. It can either be generated normally though
+#the RCA of whatever size radix each section is, or it can be genreated though skip
+#logic for the corresponding section (which is the AND of the previous section's carry
+#with the AND of all propagate signals generated for each section).
+
+#This design will use 4-bit skip sections, since that's what is typical for low radix.
+#Also because I'm not a masochist.
+
+def make_cskipa8():
 
 	#This is a demo for the default gate if you want to see it
 	#test_gate = gate();
@@ -27,16 +36,16 @@ def make_rca8():
 	
 	##set global params to: X = 50, Y = 8 for condensed grid space
 	
-	grid_y = 8;
+	grid_y = 16;
 	grid_x = 50;
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
-	rca8 = [[None for i in range(grid_y)] for i in range(grid_x)];
+	cskipa8 = [[None for i in range(grid_y)] for i in range(grid_x)];
 	
 	#bookkeeping
 	gate_number = 1;
-	max_y = 6;
+	max_y = 12;
 	current_y = 0;
 	current_x = 0;
 	
@@ -62,7 +71,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR1.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR1;
+	cskipa8[temppos[0]][temppos[1]] = XOR1;
 	#
 	#######################################################
 	#
@@ -81,7 +90,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR2.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR2;
+	cskipa8[temppos[0]][temppos[1]] = XOR2;
 	#
 	#######################################################
 	#######################################################
@@ -101,7 +110,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND1.get_position();
-	rca8[temppos[0]][temppos[1]] = AND1;
+	cskipa8[temppos[0]][temppos[1]] = AND1;
 	#
 	#######################################################
 	#
@@ -120,7 +129,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND2.get_position();
-	rca8[temppos[0]][temppos[1]] = AND2;
+	cskipa8[temppos[0]][temppos[1]] = AND2;
 	#
 	#######################################################
 	#
@@ -139,7 +148,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND3.get_position();
-	rca8[temppos[0]][temppos[1]] = AND3;
+	cskipa8[temppos[0]][temppos[1]] = AND3;
 	#
 	#######################################################
 	#
@@ -158,7 +167,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR1.get_position();
-	rca8[temppos[0]][temppos[1]] = OR1;
+	cskipa8[temppos[0]][temppos[1]] = OR1;
 	#
 	#######################################################
 	#
@@ -178,7 +187,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR2.get_position();
-	rca8[temppos[0]][temppos[1]] = OR2;
+	cskipa8[temppos[0]][temppos[1]] = OR2;
 	#######################################################
 	#######################################################
 	
@@ -203,7 +212,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR3.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR3;
+	cskipa8[temppos[0]][temppos[1]] = XOR3;
 	#
 	#######################################################
 	#
@@ -222,7 +231,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR4.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR4;
+	cskipa8[temppos[0]][temppos[1]] = XOR4;
 	#
 	#######################################################
 	#######################################################
@@ -242,7 +251,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND4.get_position();
-	rca8[temppos[0]][temppos[1]] = AND4;
+	cskipa8[temppos[0]][temppos[1]] = AND4;
 	#
 	#######################################################
 	#
@@ -261,7 +270,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND5.get_position();
-	rca8[temppos[0]][temppos[1]] = AND5;
+	cskipa8[temppos[0]][temppos[1]] = AND5;
 	#
 	#######################################################
 	#
@@ -280,7 +289,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND6.get_position();
-	rca8[temppos[0]][temppos[1]] = AND6;
+	cskipa8[temppos[0]][temppos[1]] = AND6;
 	#
 	#######################################################
 	#
@@ -299,7 +308,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR3.get_position();
-	rca8[temppos[0]][temppos[1]] = OR3;
+	cskipa8[temppos[0]][temppos[1]] = OR3;
 	#
 	#######################################################
 	#
@@ -319,7 +328,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR4.get_position();
-	rca8[temppos[0]][temppos[1]] = OR4;
+	cskipa8[temppos[0]][temppos[1]] = OR4;
 	#######################################################
 	#######################################################
 	
@@ -344,7 +353,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR5.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR5;
+	cskipa8[temppos[0]][temppos[1]] = XOR5;
 	#
 	#######################################################
 	#
@@ -363,7 +372,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR6.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR6;
+	cskipa8[temppos[0]][temppos[1]] = XOR6;
 	#
 	#######################################################
 	#######################################################
@@ -383,7 +392,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND7.get_position();
-	rca8[temppos[0]][temppos[1]] = AND7;
+	cskipa8[temppos[0]][temppos[1]] = AND7;
 	#
 	#######################################################
 	#
@@ -402,7 +411,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND8.get_position();
-	rca8[temppos[0]][temppos[1]] = AND8;
+	cskipa8[temppos[0]][temppos[1]] = AND8;
 	#
 	#######################################################
 	#
@@ -421,7 +430,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND9.get_position();
-	rca8[temppos[0]][temppos[1]] = AND9;
+	cskipa8[temppos[0]][temppos[1]] = AND9;
 	#
 	#######################################################
 	#
@@ -440,7 +449,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR5.get_position();
-	rca8[temppos[0]][temppos[1]] = OR5;
+	cskipa8[temppos[0]][temppos[1]] = OR5;
 	#
 	#######################################################
 	#
@@ -460,7 +469,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR6.get_position();
-	rca8[temppos[0]][temppos[1]] = OR6;
+	cskipa8[temppos[0]][temppos[1]] = OR6;
 	#######################################################
 	#######################################################
 	
@@ -485,7 +494,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR7.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR7;
+	cskipa8[temppos[0]][temppos[1]] = XOR7;
 	#
 	#######################################################
 	#
@@ -504,7 +513,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR8.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR8;
+	cskipa8[temppos[0]][temppos[1]] = XOR8;
 	#
 	#######################################################
 	#######################################################
@@ -524,7 +533,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND10.get_position();
-	rca8[temppos[0]][temppos[1]] = AND10;
+	cskipa8[temppos[0]][temppos[1]] = AND10;
 	#
 	#######################################################
 	#
@@ -543,7 +552,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND11.get_position();
-	rca8[temppos[0]][temppos[1]] = AND11;
+	cskipa8[temppos[0]][temppos[1]] = AND11;
 	#
 	#######################################################
 	#
@@ -562,7 +571,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND12.get_position();
-	rca8[temppos[0]][temppos[1]] = AND12;
+	cskipa8[temppos[0]][temppos[1]] = AND12;
 	#
 	#######################################################
 	#
@@ -581,7 +590,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR7.get_position();
-	rca8[temppos[0]][temppos[1]] = OR7;
+	cskipa8[temppos[0]][temppos[1]] = OR7;
 	#
 	#######################################################
 	#
@@ -601,9 +610,187 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR8.get_position();
-	rca8[temppos[0]][temppos[1]] = OR8;
+	cskipa8[temppos[0]][temppos[1]] = OR8;
 	#######################################################
 	#######################################################
+	
+	##
+	##CARRY SKIP LOGIC TIME - WOOOO
+	##
+	##FIRST WE NEED TO GENERATE THE PROPAGATE SIGNALS FOR THE PREVIOUS 4-BIT DATAPATH
+	##THEN WE and THEM ALL WITH C3
+	##
+	#
+	######
+	#Propgate signals - 0
+	OR17 = gate();
+	OR17.set_name("OR17");
+	OR17.set_number(gate_number);
+	OR17.set_position(current_x,current_y);
+	OR17.add_input("A0", None);
+	OR17.add_input("B0", None);
+	OR17.add_output("P0", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+	temppos = OR17.get_position();
+	cskipa8[temppos[0]][temppos[1]] = OR17;
+	#
+	######
+	#Propgate signals - 1
+	OR18 = gate();
+	OR18.set_name("OR18");
+	OR18.set_number(gate_number);
+	OR18.set_position(current_x,current_y);
+	OR18.add_input("A1", None);
+	OR18.add_input("B1", None);
+	OR18.add_output("P1", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+	temppos = OR18.get_position();
+	cskipa8[temppos[0]][temppos[1]] = OR18;
+	#
+	######
+	#Propgate signals - 2
+	OR19 = gate();
+	OR19.set_name("OR19");
+	OR19.set_number(gate_number);
+	OR19.set_position(current_x,current_y);
+	OR19.add_input("A2", None);
+	OR19.add_input("B2", None);
+	OR19.add_output("P2", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+	temppos = OR19.get_position();
+	cskipa8[temppos[0]][temppos[1]] = OR19;
+	#
+	######
+	#Propgate signals - 3
+	OR20 = gate();
+	OR20.set_name("OR20");
+	OR20.set_number(gate_number);
+	OR20.set_position(current_x,current_y);
+	OR20.add_input("A3", None);
+	OR20.add_input("B3", None);
+	OR20.add_output("P3", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+	temppos = OR20.get_position();
+	cskipa8[temppos[0]][temppos[1]] = OR20;
+	#
+	######
+	#Propgate AND - 1:0
+	AND25 = gate();
+	AND25.set_name("AND25");
+	AND25.set_number(gate_number);
+	AND25.set_position(current_x,current_y);
+	AND25.add_input("P0", None);
+	AND25.add_input("P1", None);
+	AND25.add_output("P10_OUT", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+		current_x = current_x + 1;
+	temppos = AND25.get_position();
+	cskipa8[temppos[0]][temppos[1]] = AND25;
+	#
+	######
+	#Propgate AND - 3:2
+	AND25 = gate();
+	AND25.set_name("AND25");
+	AND25.set_number(gate_number);
+	AND25.set_position(current_x,current_y);
+	AND25.add_input("P2", None);
+	AND25.add_input("P3", None);
+	AND25.add_output("P32_OUT", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+		current_x = current_x + 1;
+	temppos = AND25.get_position();
+	cskipa8[temppos[0]][temppos[1]] = AND25;
+	#
+	######
+	#Propgate AND - 3:0
+	AND25 = gate();
+	AND25.set_name("AND25");
+	AND25.set_number(gate_number);
+	AND25.set_position(current_x,current_y);
+	AND25.add_input("P10_OUT", None);
+	AND25.add_input("P32_OUT", None);
+	AND25.add_output("P30_OUT", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+		current_x = current_x + 1;
+	temppos = AND25.get_position();
+	cskipa8[temppos[0]][temppos[1]] = AND25;
+	#
+	######
+	#Propgate AND - all signals
+	AND25 = gate();
+	AND25.set_name("AND25");
+	AND25.set_number(gate_number);
+	AND25.set_position(current_x,current_y);
+	AND25.add_input("P30_OUT", None);
+	AND25.add_input("CIN", None);
+	AND25.add_output("SKIP_OUT", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+		current_x = current_x + 1;
+	temppos = AND25.get_position();
+	cskipa8[temppos[0]][temppos[1]] = AND25;
+	#
+	######
+	#Skip and carry OR
+	OR21 = gate();
+	OR21.set_name("OR21");
+	OR21.set_number(gate_number);
+	OR21.set_position(current_x,current_y);
+	OR21.add_input("SKIP_OUT", None);
+	OR21.add_input("C3", None);
+	OR21.add_output("C3_SKIP", None);
+	#update positions
+	gate_number = gate_number + 1;
+	if(current_y < max_y):
+		current_y = current_y + 2;
+	else:
+		current_y = (current_x + 1) % 2;
+	temppos = OR21.get_position();
+	cskipa8[temppos[0]][temppos[1]] = OR21;
+	###############################################
+	###############################################
+	##
+	##SKIP LOGIC OVER - BACK TO NORMAL RCA
+	##
 	
 	'''FULL ADDER 4'''
 	
@@ -626,7 +813,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR9.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR9;
+	cskipa8[temppos[0]][temppos[1]] = XOR9;
 	#
 	#######################################################
 	#
@@ -634,7 +821,7 @@ def make_rca8():
 	XOR10.set_name("XOR10");
 	XOR10.set_number(gate_number);
 	XOR10.set_position(current_x,current_y);
-	XOR10.add_input("C3", None);
+	XOR10.add_input("C3_SKIP", None);
 	XOR10.add_input("XOR10_OUT", None);
 	XOR10.add_output("SUM4", None);
 	#update positions
@@ -645,7 +832,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR10.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR10;
+	cskipa8[temppos[0]][temppos[1]] = XOR10;
 	#
 	#######################################################
 	#######################################################
@@ -665,7 +852,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND13.get_position();
-	rca8[temppos[0]][temppos[1]] = AND13;
+	cskipa8[temppos[0]][temppos[1]] = AND13;
 	#
 	#######################################################
 	#
@@ -674,7 +861,7 @@ def make_rca8():
 	AND14.set_number(gate_number);
 	AND14.set_position(current_x,current_y);
 	AND14.add_input("B4", None);
-	AND14.add_input("C3", None);
+	AND14.add_input("C3_SKIP", None);
 	AND14.add_output("AND14_OUT", None);
 	#update positions
 	gate_number = gate_number + 1;
@@ -684,7 +871,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND14.get_position();
-	rca8[temppos[0]][temppos[1]] = AND14;
+	cskipa8[temppos[0]][temppos[1]] = AND14;
 	#
 	#######################################################
 	#
@@ -692,7 +879,7 @@ def make_rca8():
 	AND15.set_name("AND15");
 	AND15.set_number(gate_number);
 	AND15.set_position(current_x,current_y);
-	AND15.add_input("C3", None);
+	AND15.add_input("C3_SKIP", None);
 	AND15.add_input("A4", None);
 	AND15.add_output("AND15_OUT", None);
 	#update positions
@@ -703,7 +890,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND15.get_position();
-	rca8[temppos[0]][temppos[1]] = AND15;
+	cskipa8[temppos[0]][temppos[1]] = AND15;
 	#
 	#######################################################
 	#
@@ -722,7 +909,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR9.get_position();
-	rca8[temppos[0]][temppos[1]] = OR9;
+	cskipa8[temppos[0]][temppos[1]] = OR9;
 	#
 	#######################################################
 	#
@@ -742,7 +929,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR10.get_position();
-	rca8[temppos[0]][temppos[1]] = OR10;
+	cskipa8[temppos[0]][temppos[1]] = OR10;
 	#######################################################
 	#######################################################
 	
@@ -768,7 +955,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR11.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR11;
+	cskipa8[temppos[0]][temppos[1]] = XOR11;
 	#
 	#######################################################
 	#
@@ -787,7 +974,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR12.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR12;
+	cskipa8[temppos[0]][temppos[1]] = XOR12;
 	#
 	#######################################################
 	#######################################################
@@ -807,7 +994,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND16.get_position();
-	rca8[temppos[0]][temppos[1]] = AND16;
+	cskipa8[temppos[0]][temppos[1]] = AND16;
 	#
 	#######################################################
 	#
@@ -826,7 +1013,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND17.get_position();
-	rca8[temppos[0]][temppos[1]] = AND17;
+	cskipa8[temppos[0]][temppos[1]] = AND17;
 	#
 	#######################################################
 	#
@@ -845,7 +1032,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND18.get_position();
-	rca8[temppos[0]][temppos[1]] = AND18;
+	cskipa8[temppos[0]][temppos[1]] = AND18;
 	#
 	#######################################################
 	#
@@ -864,7 +1051,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR11.get_position();
-	rca8[temppos[0]][temppos[1]] = OR11;
+	cskipa8[temppos[0]][temppos[1]] = OR11;
 	#
 	#######################################################
 	#
@@ -884,7 +1071,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR12.get_position();
-	rca8[temppos[0]][temppos[1]] = OR12;
+	cskipa8[temppos[0]][temppos[1]] = OR12;
 	#######################################################
 	#######################################################
 	
@@ -909,7 +1096,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR13.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR13;
+	cskipa8[temppos[0]][temppos[1]] = XOR13;
 	#
 	#######################################################
 	#
@@ -928,7 +1115,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR14.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR14;
+	cskipa8[temppos[0]][temppos[1]] = XOR14;
 	#
 	#######################################################
 	#######################################################
@@ -948,7 +1135,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND19.get_position();
-	rca8[temppos[0]][temppos[1]] = AND19;
+	cskipa8[temppos[0]][temppos[1]] = AND19;
 	#
 	#######################################################
 	#
@@ -967,7 +1154,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND20.get_position();
-	rca8[temppos[0]][temppos[1]] = AND20;
+	cskipa8[temppos[0]][temppos[1]] = AND20;
 	#
 	#######################################################
 	#
@@ -986,7 +1173,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND21.get_position();
-	rca8[temppos[0]][temppos[1]] = AND21;
+	cskipa8[temppos[0]][temppos[1]] = AND21;
 	#
 	#######################################################
 	#
@@ -1005,7 +1192,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR13.get_position();
-	rca8[temppos[0]][temppos[1]] = OR13;
+	cskipa8[temppos[0]][temppos[1]] = OR13;
 	#
 	#######################################################
 	#
@@ -1025,7 +1212,7 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR14.get_position();
-	rca8[temppos[0]][temppos[1]] = OR14;
+	cskipa8[temppos[0]][temppos[1]] = OR14;
 	#######################################################
 	#######################################################
 	
@@ -1050,7 +1237,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR15.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR15;
+	cskipa8[temppos[0]][temppos[1]] = XOR15;
 	#
 	#######################################################
 	#
@@ -1069,7 +1256,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = XOR16.get_position();
-	rca8[temppos[0]][temppos[1]] = XOR16;
+	cskipa8[temppos[0]][temppos[1]] = XOR16;
 	#
 	#######################################################
 	#######################################################
@@ -1089,7 +1276,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND22.get_position();
-	rca8[temppos[0]][temppos[1]] = AND22;
+	cskipa8[temppos[0]][temppos[1]] = AND22;
 	#
 	#######################################################
 	#
@@ -1108,7 +1295,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND23.get_position();
-	rca8[temppos[0]][temppos[1]] = AND23;
+	cskipa8[temppos[0]][temppos[1]] = AND23;
 	#
 	#######################################################
 	#
@@ -1127,7 +1314,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = AND24.get_position();
-	rca8[temppos[0]][temppos[1]] = AND24;
+	cskipa8[temppos[0]][temppos[1]] = AND24;
 	#
 	#######################################################
 	#
@@ -1146,7 +1333,7 @@ def make_rca8():
 		current_y = (current_x + 1) % 2;
 		current_x = current_x + 1;
 	temppos = OR15.get_position();
-	rca8[temppos[0]][temppos[1]] = OR15;
+	cskipa8[temppos[0]][temppos[1]] = OR15;
 	#
 	#######################################################
 	#
@@ -1166,40 +1353,40 @@ def make_rca8():
 	#Done with FA, update row
 	current_x = current_x + 1;
 	temppos = OR16.get_position();
-	rca8[temppos[0]][temppos[1]] = OR16;
+	cskipa8[temppos[0]][temppos[1]] = OR16;
 	#######################################################
 	#######################################################
 	
-	print("RCA placed cell grid: ");
-	print(rca8);
+	print("CSkipA placed cell grid: ");
+	print(cskipa8);
 	#get placed gate count - sanity checking grid for duplicates and misplaced gates
 	#there could still be typos - just fyi
 	placed_count = 0;
 	duplicate_gate_count = 0;
-	for i in range(len(rca8)):
+	for i in range(len(cskipa8)):
 	
-		for j in range(len(rca8[i])):
+		for j in range(len(cskipa8[i])):
 		
-			if(rca8[i][j] != None):
+			if(cskipa8[i][j] != None):
 				placed_count = placed_count + 1;
 				##UNCOMMENT FOR GATE INFO
-				#rca8[i][j].get_info();
+				#cskipa8[i][j].get_info();
 				
 			#Performing list check for inputs and outputs
 			
-			for k in range(len(rca8)):
+			for k in range(len(cskipa8)):
 			
-				for l in range(len(rca8[k])):
+				for l in range(len(cskipa8[k])):
 				
-					if(rca8[i][j] != None and rca8[k][l] != None and (i != k and j != l)):
-							gate1_in = str(rca8[i][j].inputs);
-							gate2_in = str(rca8[k][l].inputs);
+					if(cskipa8[i][j] != None and cskipa8[k][l] != None and (i != k and j != l)):
+							gate1_in = str(cskipa8[i][j].inputs);
+							gate2_in = str(cskipa8[k][l].inputs);
 							
-							gate1_out = str(rca8[i][j].outputs);
-							gate2_out = str(rca8[k][l].outputs);
+							gate1_out = str(cskipa8[i][j].outputs);
+							gate2_out = str(cskipa8[k][l].outputs);
 							
 							if(gate1_in == gate2_in and gate1_out == gate2_out):
-								rca8[i][j].get_info();
+								cskipa8[i][j].get_info();
 								duplicate_gate_count = duplicate_gate_count + 1;
 	
 	print("Number of gates placed: ");
@@ -1217,6 +1404,6 @@ def make_rca8():
 #Also you scrolled down this far. Good on you.
 def main():
 
-	make_rca8();
+	make_cskipa8();
 	
 main();	
