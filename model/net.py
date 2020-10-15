@@ -8,26 +8,26 @@ def Mdist(a,b):
 # weakly-connected DAG
 class net:
 
-# vertices are name -> [x, y, dist_from_source,
-#                       current layer being actively drawn on, layers]
-    v={}
-# edges are [v1, v2, layer]
-# do we need this array? do we ever use it? do i dare take it out?
-# the answer to all the above questions is "no"
-    e=[]
-# edict is {v -> (unique edge with v as the sink) for all v in vertices}
-    edict={}
-# close tracks the closest routed vertex to each sink
-# {v -> [closest_vertex, distance]}
-    close={}
-# this is the unique source
-    p=0
-# this is a list of final sinks
-# i also technically don't need this array
-# since by definition self.close.keys() == self.k
-    k=[]
-# next available name for vertex creation
-    next_name=0
+    # vertices are name -> [x, y, dist_from_source,
+    #                       current layer being actively drawn on, layers]
+##    v={}
+    # edges are [v1, v2, layer]
+    # do we need this array? do we ever use it? do i dare take it out?
+    # the answer to all the above questions is "no"
+##    e=[]
+    # edict is {v -> (unique edge with v as the sink) for all v in vertices}
+##    edict={}
+    # close tracks the closest routed vertex to each sink
+    # {v -> [closest_vertex, distance]}
+##    close={}
+    # this is the unique source
+##    p=0
+    # this is a list of final sinks
+    # i also technically don't need this array
+    # since by definition self.close.keys() == self.k
+##    k=[]
+    # next available name for vertex creation
+##    next_name=0
 
     def __str__(self):
         ret="Vertices\n"
@@ -47,6 +47,14 @@ class net:
 # [[x,y], ... ]
 # first element is source
     def __init__(self,port_list):
+        self.v={}
+        self.e=[]
+        self.edict={}
+        self.close={}
+        self.p=0
+        self.k=[]
+        self.next_name=0
+
         tmpflag=True
         # Defining k like that in case we later decide to remove self.k
         k=[]
@@ -93,7 +101,7 @@ class net:
     # This is a piss-poor loss function
     def loss(self):
         ret = 0
-        for a in k:
+        for a in self.k:
             ret+=self.imped(a)
         return ret
 
@@ -111,13 +119,13 @@ class net:
             ret.append('down')
         if L[-1]<params.MM:
             ret.append('up')
-        if y<(params.GY-params.GSQ):
+        if y<=(params.GY-params.GSQ):
             ret.append('N')
-        if y>params.GSQ:
+        if y>=params.GSQ:
             ret.append('S')
-        if x<(params.GX-params.GSQ):
+        if x<=(params.GX-params.GSQ):
             ret.append('E')
-        if x>params.GSQ:
+        if x>=params.GSQ:
             ret.append('W')
         return ret
 
@@ -158,7 +166,8 @@ class net:
         prev_e = self.edict.get(v,[0,0,'',0])
 
         # If we can extend the edge
-        if prev_e[-1] == aL or man_dir in ['up','down']:
+#        if prev_e[-1] == aL or man_dir in ['up','down']:
+        if len(L)==1 or man_dir in ['up','down']:
         # Just move the vertex :)
             new_name=v
             self.v[v]=[X,Y,dist,aL,L]
