@@ -14,6 +14,7 @@ class net:
     # edges are [v1, v2, layer]
     # do we need this array? do we ever use it? do i dare take it out?
     # the answer to all the above questions is "no"
+    # NEVERMIND THE ANSWER IS YES
 ##    e=[]
     # edict is {v -> (unique edge with v as the sink) for all v in vertices}
 ##    edict={}
@@ -35,7 +36,7 @@ class net:
             ret+=str(name)+' -> '+str(v)+'\n'
             ret+="Valid actions: "+str(self.valid_actions(name))+'\n'
         ret+="Edges\n"
-        for e in self.e:
+        for e in self.edict.values():
             ret+=str(e)+'\n'
         ret+="Closest vertices to sinks\n"
         for name,c in self.close.items():
@@ -48,12 +49,14 @@ class net:
 # first element is source
     def __init__(self,port_list):
         self.v={}
-        self.e=[]
+#        self.e=[]
         self.edict={}
         self.close={}
         self.p=0
         self.k=[]
         self.next_name=0
+        self.done={}
+        self.all_done=False
 
         tmpflag=True
         # Defining k like that in case we later decide to remove self.k
@@ -71,6 +74,7 @@ class net:
             self.next_name+=1
         for a in k:
             self.close[a]=[self.p,Mdist(self.v[self.p],self.v[a][:2])]
+            self.done[a]=False
         self.k=k
 
     def _make_v(self,new_v):
@@ -80,7 +84,7 @@ class net:
         return new_name
 
     def _make_e(self,new_e):
-        self.e.append(new_e)
+#        self.e.append(new_e)
         self.edict[new_e[1]] = new_e
 
     # Shortest path from source to target vertex
@@ -111,6 +115,9 @@ class net:
     def valid_actions(self,v):
         ret = []
 
+        if v in self.close:
+            return []
+
         L = self.v[v][-1]
         x = self.v[v][0]
         y = self.v[v][1]
@@ -128,6 +135,28 @@ class net:
         if x>=params.GSQ:
             ret.append('W')
         return ret
+
+    def trim(self):
+        vital=[0]
+        print(self.edict)
+        print('hi')
+        def _trim(v):
+            vital.append(v)
+            if v not in self.edict:
+                return
+            return _trim(self.edict[v][0])
+
+        for v in self.done:
+            _trim(v)
+
+        bad=[v for v in self.v if v not in vital]
+
+        for v in bad:
+            del self.v[v]
+            del self.edict[v]
+        print(self)
+        print('hi')
+        return bad
 
     # General move function for all directions
     # If possible, extend the previous net and just move this vertex
@@ -186,6 +215,19 @@ class net:
             new_dist += max([0,self.v[new_name][-1][0]-1])
             if new_dist < self.close[a][-1]:
                 self.close[a]=[new_name,new_dist]
+            if new_dist==0:
+                self.done[a]=True
+                self.v[a]=self.v[v]
+                self.edict[a]=self.edict[v]
+                self.edict[a][1]=a
+                self.v[a][-1]=[0]+self.v[a][-1]
+                self.close[a]=[a,0]
+                del self.v[v]
+                del self.edict[v]
+                if False not in self.done.values():
+                    self.all_done=True
+                    #self.trim()
+                new_name=a
 
         return (new_name,self.v[new_name])
 

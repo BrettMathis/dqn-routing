@@ -195,6 +195,8 @@ class design:
         [active_n,active_v] = self.active
         v_coords = self.nets[active_n].v[active_v][:2]
         for n_name,n in self.nets.items():
+            if n.all_done:
+                continue
             for v_name,v in n.v.items():
                 if v_name in n.close:
                     continue
