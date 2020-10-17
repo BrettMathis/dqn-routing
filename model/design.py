@@ -38,8 +38,8 @@ class design:
 
         # Grab the dimensions of the grid and initialize it
         round_up = lambda x,y: int(x/y)+(x%y > 0)
-        self.xdim=round_up(params.GX,params.GSQ)
-        self.ydim=round_up(params.GY,params.GSQ)
+        self.xdim=round_up(params.GX+1,params.GSQ)
+        self.ydim=round_up(params.GY+1,params.GSQ)
         self.grid=[[[{},{}] for j in range(self.ydim)] for i in range(self.xdim)]
 
         # Parse the inputs
@@ -149,7 +149,12 @@ class design:
             # Congestion ALWAYS increases
             # in new location
             # ONLY on active Layer
-            self.grid[new_v[0]][new_v[1]][-1][new_v[-2]]+=1
+            # unless this move reached a net sink
+            if new_n not in net_obj.close:
+                tmp=self.grid[new_v[0]][new_v[1]][-1].get(new_v[-2],0)
+                tmp+=1
+                self.grid[new_v[0]][new_v[1]][-1][new_v[-2]]=tmp
+                del tmp
 
             # Update new position with vertex, if vertex moved
             tmp=self.grid[new_v[0]][new_v[1]][0].get(active_n,[])
@@ -158,16 +163,68 @@ class design:
             self.grid[new_v[0]][new_v[1]][0][active_n]=tmp
             del tmp
 
-            # If the vertex moved, modify the old vertex
-            if len(old_v[-1])==1:
-                tmp=self.grid[old_v[0]][old_v[1]][0][active_n]
+            if not (new_n in net_obj.close and net_obj.done[new_n]):
+                # If the vertex moved, modify the old vertex
+                if len(old_v[-1])==1 and X not in ['up','down']:
+                    tmp=self.grid[old_v[0]][old_v[1]][0][active_n]
+                    tmp.remove(old_n)
+                    self.grid[old_v[0]][old_v[1]][0][active_n]=tmp
+            # If we've fully routed a wire with this move
+            else:
+                # Delete the old vertex
+                del net_obj.v[old_n]
+                # Delete reference to the old vertex from the grid
+                [x,y]=old_v[:2]
+                tmp=self.grid[x][y][0][active_n]
                 tmp.remove(old_n)
-                self.grid[old_v[0]][old_v[1]][0][active_n]=tmp
+                self.grid[x][y][0][active_n]=tmp
 
+            # If the net is completely routed, we have to trim
+            if net_obj.all_done:
+                # Figure out which vertices are not superfluous
+                vital=[]
+                # Recurse backwards from sink port
+                def _trim(v):
+                    vital.append(v)
+                    if v not in net_obj.edict:
+                        return
+                    return _trim(net_obj.edict[v][0])
+                # For each sink port
+                for v in net_obj.done:
+                    _trim(v)
+
+                # All vertices which did not get flagged by recursion
+                # should be removed
+                bad = [v for v in net_obj.v if v not in vital]
+
+                for v in bad:
+                    [x,y,_,_,L]=net_obj.v[v]
+                    # Delete vertices
+                    del net_obj.v[v]
+                    # Delete references to vertices in grid
+                    tmp=self.grid[x][y][0][active_n]
+                    tmp.remove(v)
+                    self.grid[x][y][0][active_n]=tmp
+                    # Delete congestion due to vertices
+                    for l in L:
+                        self.grid[x][y][-1][l]-=1
+                    # Delete edges
+                    [v1,v2,coords,L]=net_obj.edict[v]
+                    del net_obj.edict[v]
+                    # Delete congestion due to edges
+                    for (a,b) in coords[1:-1]:
+                        if (a,b)!=(x,y):
+                            self.grid[a][b][-1][L]-=1
             # Switch active to new vertex
             self.active=[active_n,new_n]
-        # Need to implement switch
-        pass
+        
+        # Switch action
+        if "switch" in X:
+            dest = int(X.replace("switch",""))
+            switches = self.switching_factor()
+            switch = switches[dest]
+            self.active=switch.split('_')
+            self.active[1]=int(self.active[1])
 
     def scale_congestion(self,state,x,y,L):
         cong=state[x][y][L]
@@ -205,5 +262,9 @@ class design:
                 key=n_name+"_"+str(v_name)
                 key_coords=v[:2]
                 ret[key]=n.loss()/max([net.Mdist(v_coords,key_coords),1])
-        return ret
+        retl = [k for k,v in sorted(ret.items(),key=lambda x: x[1])]
+        if len(retl)<params.SN:
+            retl = retl*params.SN
+        retl = retl[:params.SN]
+        return retl
 

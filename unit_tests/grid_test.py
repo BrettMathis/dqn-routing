@@ -34,40 +34,82 @@ for n in des.nets.values():
 print(des.grid[0][0])
 print(des.grid[5][5])
 print(des.grid[3][3])
-print(des.active)
+# Randomly chosen
+assert(des.active==['net1',0])
 
 state=des.get_state()
-print(des.nets["net1"].loss())
-print(des.nets["net2"].loss())
-print(des.nets["net3"].loss())
+#print(des.nets["net1"].loss())
+#print(des.nets["net2"].loss())
+#print(des.nets["net3"].loss())
 print(des.global_loss(state))
 
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
-print(des.switching_factor())
-print(des.nets["net1"])
+#print(des.nets["net1"].loss())
+#print(des.switching_factor())
+#print(des.nets["net1"])
 
 des.do_action("N")
-print(des.nets["net1"].loss())
+state=des.get_state()
+#print(des.nets["net1"].loss())
 print(des.global_loss(state))
-print(des.switching_factor())
-print(des.nets["net1"])
-des.do_action("N")
-des.do_action("N")
-des.do_action("E")
-des.do_action("E")
-des.do_action("N")
-des.do_action("N")
-des.do_action("E")
-des.do_action("E")
-des.do_action("E")
-print(des.nets["net1"].loss())
-print(des.global_loss(state))
-print(des.switching_factor())
-print(des.nets["net1"])
+#print(des.nets["net1"])
+assert(des.active==['net1',2])
 
-#for a in des.nets.values():
-#    print(a.loss())
+des.do_action("switch2")
+assert(des.active==['net1',0])
+print(des.global_loss(des.get_state()))
+
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("N")
+print(des.global_loss(des.get_state()))
+des.do_action("up")
+print(des.global_loss(des.get_state()))
+des.do_action("W")
+print(des.global_loss(des.get_state()))
+des.do_action("W")
+print(des.global_loss(des.get_state()))
+
+des.do_action("switch4")
+assert(des.active==['net1',2])
+
+
+des.do_action("N")
+print(des.global_loss(des.get_state()))
+des.do_action("N")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("N")
+print(des.global_loss(des.get_state()))
+des.do_action("N")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+print(des.global_loss(des.get_state()))
+des.do_action("E")
+
+# Check net1 is finished
+assert(des.nets["net1"].all_done)
+
+# Check clean-up was done properly
+for x in des.nets["net1"].v:
+    assert(x in [0,1])
+
+# Check net1 can no longer be switched to
+for x in des.switching_factor():
+    assert("net1" not in x)
 
 state=des.get_state()
+
+#Check all metal2 routing was properly cleaned
+for x in state:
+    for y in x:
+        assert(y[2]==0)
+        assert(y[2+params.MM+1]==0)
+
 print(des.global_loss(state))

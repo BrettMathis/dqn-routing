@@ -11,7 +11,7 @@ class net:
     # vertices are name -> [x, y, dist_from_source,
     #                       current layer being actively drawn on, layers]
 ##    v={}
-    # edges are [v1, v2, layer]
+    # edges are [v1, v2, [x,y], layer]
     # do we need this array? do we ever use it? do i dare take it out?
     # the answer to all the above questions is "no"
     # NEVERMIND THE ANSWER IS YES
@@ -41,6 +41,10 @@ class net:
         ret+="Closest vertices to sinks\n"
         for name,c in self.close.items():
             ret+=str(name)+' -> '+str(c)+'\n'
+        ret+="Wires that are done routing: "
+        for a in self.done:
+            if self.done[a]:
+                ret+=str(a)+' '
         return ret
 
 
@@ -102,10 +106,10 @@ class net:
         return ret
 
     # Sum of impedances from source to all sinks
-    # This is a piss-poor loss function
+    # This is an awful loss function
     def loss(self):
         ret = 0
-        for a in self.k:
+        for a in self.close:
             ret+=self.imped(a)
         return ret
 
@@ -115,7 +119,7 @@ class net:
     def valid_actions(self,v):
         ret = []
 
-        if v in self.close:
+        if v in self.close or self.all_done:
             return []
 
         L = self.v[v][-1]
@@ -136,33 +140,13 @@ class net:
             ret.append('W')
         return ret
 
-    def trim(self):
-        vital=[0]
-        print(self.edict)
-        print('hi')
-        def _trim(v):
-            vital.append(v)
-            if v not in self.edict:
-                return
-            return _trim(self.edict[v][0])
-
-        for v in self.done:
-            _trim(v)
-
-        bad=[v for v in self.v if v not in vital]
-
-        for v in bad:
-            del self.v[v]
-            del self.edict[v]
-        print(self)
-        print('hi')
-        return bad
-
     # General move function for all directions
     # If possible, extend the previous net and just move this vertex
     def move(self,v,man_dir):
         # Grab vertex info
         [X,Y,dist,aL,L] = self.v[v][:]
+        origX=X
+        origY=Y
 
         # We can go ahead and update the distance-from-source now
         if man_dir not in ['up','down']:
@@ -192,7 +176,7 @@ class net:
         new_name=-1
 
         # Grab the edge that terminates in this node
-        prev_e = self.edict.get(v,[0,0,'',0])
+#        prev_e = self.edict.get(v,[0,0,[],0])
 
         # If we can extend the edge
 #        if prev_e[-1] == aL or man_dir in ['up','down']:
@@ -200,13 +184,20 @@ class net:
         # Just move the vertex :)
             new_name=v
             self.v[v]=[X,Y,dist,aL,L]
+            # Add new grid square to edge
+            if man_dir not in ['up','down']:
+                prev_e=self.edict[v]
+                tmp=prev_e[-2]
+                tmp.append([X,Y])
+                prev_e[-2]=tmp
+                self.edict[v]=prev_e
         else:
         # If we cannot extend the edge, make a new vertex and edge
             # 1 of 1 places where new v are made
             new_name=self._make_v([X,Y,dist,aL,[aL]])
 
             # 1 of 1 places where new e are made
-            self._make_e([v,new_name,aL])
+            self._make_e([v,new_name,[[origX,origY],[X,Y]],aL])
 
         # Update self.close
         for a in self.close:
@@ -222,11 +213,10 @@ class net:
                 self.edict[a][1]=a
                 self.v[a][-1]=[0]+self.v[a][-1]
                 self.close[a]=[a,0]
-                del self.v[v]
                 del self.edict[v]
+                #del self.v[v]
                 if False not in self.done.values():
                     self.all_done=True
-                    #self.trim()
                 new_name=a
 
         return (new_name,self.v[new_name])
