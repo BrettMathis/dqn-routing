@@ -2,7 +2,7 @@
 
 import sys,math
 
-from model import params, net
+from model import params,net
 
 # Basically a 2-dimensional matrix
 class design:
@@ -32,6 +32,7 @@ class design:
         self.ydim=0
         self.nets={}
         self.active=[0,0]
+        self.no_switch=False
 
         # Define grid itself
         # Each square is [x,y,{n -> [v]},{L -> c}]
@@ -128,7 +129,16 @@ class design:
                 state[a][b]=el_parsed
         return state
 
-    def do_action(self,X):
+    def do_action(self,raw_X,translate=True):
+        # Convert raw numerical action to action name
+        translate_action = {0:'N',1:'S',2:'E',3:'W'}
+        for a in range(params.SN):
+            translate_action[4+a]='switch'+str(a)
+        if translate:
+            X=translate_action[raw_X]
+        else:
+            X=raw_X
+
         # Get names of active net and vertex
         [active_n,active_v] = self.active
         # Get actual net object
@@ -245,12 +255,13 @@ class design:
         ret1 = ret1/len(self.nets)
 #        ret2 = ret2/self.xdim
 #        ret2 = ret2/self.ydim
-        return ret1+ret2
+        return -1*(ret1+ret2)
 
     def switching_factor(self):
         ret={}
         [active_n,active_v] = self.active
         v_coords = self.nets[active_n].v[active_v][:2]
+        cur_key=''
         for n_name,n in self.nets.items():
             if n.all_done:
                 continue
@@ -262,9 +273,15 @@ class design:
                 key=n_name+"_"+str(v_name)
                 key_coords=v[:2]
                 ret[key]=n.loss()/max([net.Mdist(v_coords,key_coords),1])
-        retl = [k for k,v in sorted(ret.items(),key=lambda x: x[1])]
+        if ret=={}:
+            retl=[active_n+"_"+str(active_v)]*params.SN
+            self.no_switch=True
+        else:
+            retl = [k for k,v in sorted(ret.items(),key=lambda x: x[1])]
         if len(retl)<params.SN:
             retl = retl*params.SN
         retl = retl[:params.SN]
         return retl
 
+    def done(self):
+        return self.no_switch and self.nets[self.active[0]].all_done
