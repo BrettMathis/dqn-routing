@@ -21,7 +21,7 @@ class DQN_GR_env(gym.Env):
 
         self.design = design.design(*self.init_data)
 
-        self.action_space = spaces.Discrete(4+params.SN)
+        self.action_space = spaces.Discrete(6+params.SN)
         self.observation_space = spaces.Box(0,max(params.MT)*5,
                                  [params.GX+1,params.GY+1,2*(params.MM+1)],
                                  np.intc)

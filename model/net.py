@@ -45,6 +45,10 @@ class net:
         for a in self.done:
             if self.done[a]:
                 ret+=str(a)+' '
+        if self.all_done:
+            ret+='\nThis net is completely done routing\n'
+        else:
+            ret+='\nThis net is not done routing\n'
         return ret
 
 
@@ -93,7 +97,11 @@ class net:
 
     # Shortest path from source to target vertex
     def shortest(self,v):
-        return self.v[v][2]
+        try:
+            return self.v[v][2]
+        except:
+            print(self)
+            raise
 
     # Modeling the impedance from source to target vertex
     # The impedance approximation is composed of two parts:
@@ -178,20 +186,51 @@ class net:
         # Grab the edge that terminates in this node
 #        prev_e = self.edict.get(v,[0,0,[],0])
 
+        # Explained later
+        needs_clone=False
+
         # If we can extend the edge
+        can_extend = (len(L)==1 or man_dir in ['up','down'])
 #        if prev_e[-1] == aL or man_dir in ['up','down']:
-        if len(L)==1 or man_dir in ['up','down']:
+        if can_extend:
         # Just move the vertex :)
-            new_name=v
-            self.v[v]=[X,Y,dist,aL,L]
-            # Add new grid square to edge
-            if man_dir not in ['up','down']:
-                prev_e=self.edict[v]
-                tmp=prev_e[-2]
-                tmp.append([X,Y])
-                prev_e[-2]=tmp
-                self.edict[v]=prev_e
-        else:
+
+            # If this vertex was in the self.close dict
+            # We need to take some special care
+            # There are 3 cases
+            # 1. v is closest to some sink and v moves closer
+            # 2. v is closest to some sink and v moves further
+            # 3. v is closest to no sinks
+            # In case 1 and 3 we just move the vertex
+            # In case 2 we clone the vertex
+            # We don't need to update the vertex index; only the clone moves
+            # We don't need to update the distance because it auto-updates
+
+
+            for a,b in self.close.items():
+                # Check if vertex in self.close dict
+                if b[0]==v:
+                    # Check if vertex moves closer or further
+                    new_dist = Mdist([X,Y],self.v[a][0:2])
+                    old_dist = Mdist(self.v[self.close[a][0]],self.v[a][0:2])
+                        # Vertical distance
+                    new_dist += max([0,L[0]-1])
+                    needs_clone = needs_clone or new_dist>old_dist
+
+        # Just move the vertex :)
+            if not needs_clone:
+                new_name=v
+                self.v[v]=[X,Y,dist,aL,L]
+                # Add new grid square to edge
+                if man_dir not in ['up','down']:
+                    prev_e=self.edict[v]
+                    tmp=prev_e[-2]
+                    tmp.append([X,Y])
+                    prev_e[-2]=tmp
+                    self.edict[v]=prev_e
+
+        print(needs_clone)
+        if needs_clone or not can_extend:
         # If we cannot extend the edge, make a new vertex and edge
             # 1 of 1 places where new v are made
             new_name=self._make_v([X,Y,dist,aL,[aL]])
@@ -201,10 +240,11 @@ class net:
 
         # Update self.close
         for a in self.close:
-            new_dist = Mdist(self.v[new_name][0:2],self.v[a][0:2])
+            new_dist = Mdist([X,Y],self.v[a][0:2])
+            old_dist = Mdist(self.v[self.close[a][0]],self.v[a][0:2])
             # Vertical distance
-            new_dist += max([0,self.v[new_name][-1][0]-1])
-            if new_dist < self.close[a][-1]:
+            new_dist += max([0,L[0]-1])
+            if new_dist < old_dist:
                 self.close[a]=[new_name,new_dist]
             if new_dist==0:
                 self.done[a]=True
@@ -213,6 +253,10 @@ class net:
                 self.edict[a][1]=a
                 self.v[a][-1]=[0]+self.v[a][-1]
                 self.close[a]=[a,0]
+                print('deleting')
+                print(v)
+                print(self.edict[v])
+                print(self.close)
                 del self.edict[v]
                 #del self.v[v]
                 if False not in self.done.values():

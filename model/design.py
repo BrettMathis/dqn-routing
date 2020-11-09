@@ -131,9 +131,9 @@ class design:
 
     def do_action(self,raw_X,translate=True):
         # Convert raw numerical action to action name
-        translate_action = {0:'N',1:'S',2:'E',3:'W'}
+        translate_action = {0:'N',1:'S',2:'E',3:'W',4:'up',5:'down'}
         for a in range(params.SN):
-            translate_action[4+a]='switch'+str(a)
+            translate_action[6+a]='switch'+str(a)
         if translate:
             X=translate_action[raw_X]
         else:
@@ -191,6 +191,7 @@ class design:
 
             # If the net is completely routed, we have to trim
             if net_obj.all_done:
+                print('all done debugging statement')
                 # Figure out which vertices are not superfluous
                 vital=[]
                 # Recurse backwards from sink port
@@ -225,8 +226,17 @@ class design:
                     for (a,b) in coords[1:-1]:
                         if (a,b)!=(x,y):
                             self.grid[a][b][-1][L]-=1
+
             # Switch active to new vertex
             self.active=[active_n,new_n]
+
+            # Is this good? Is this bad? Unsure
+            # But I'll put it in anyway
+            # If the net is completely routed
+            # JUMP
+            if net_obj.all_done:
+                self.do_action(6)
+                return
         
         # Switch action
         if "switch" in X:
