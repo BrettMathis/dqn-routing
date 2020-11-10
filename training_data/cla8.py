@@ -3,7 +3,7 @@ import math
 sys.path.append("..")
 
 from model import params
-from gates import *
+from training_data.gates import *
 
 #This is gonna be a big one - datapath for an 8-bit carry lookahead adder.
 #We need 7 reduced full adders with spread XOR logic to use in both propagate
@@ -14,7 +14,7 @@ from gates import *
 #then into another for bits 7:4. These carries flow into the corresponding RFA/FA's for 
 #each bit.
 
-def make_cla8():
+def make_cla8(y_max):
 
 	#This is a demo for the default gate if you want to see it
 	#test_gate = gate();
@@ -35,8 +35,8 @@ def make_cla8():
 	
 	##set global params to: X = 50, Y = 8 for condensed grid space
 	
-	grid_y = 8;
-	grid_x = 70;
+	grid_y = 100*y_max;
+	grid_x = 100*y_max;
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
@@ -44,7 +44,7 @@ def make_cla8():
 	
 	#bookkeeping
 	gate_number = 1;
-	max_y = 6;
+	max_y = y_max;
 	current_y = 0;
 	current_x = 0;
 	
@@ -1872,11 +1872,8 @@ def make_cla8():
 	#
 	######################################################
 	#
-	
-	
-	
-	
-	print("CLAs placed cell grid: ");
+	return cla8;
+	'''print("CLAs placed cell grid: ");
 	print(cla8);
 	#get placed gate count - sanity checking grid for duplicates and misplaced gates
 	#there could still be typos - just fyi
@@ -1917,12 +1914,12 @@ def make_cla8():
 	if(duplicate_gate_count == 0):
 		print("no duplicates found! :DDDDDD");
 	else:
-		print("duplicates found :'(");
+		print("duplicates found :'(");'''
 
 #I like having a main method because I'm particular like that.
 #Also you scrolled down this far. Good on you.
 def main():
 
-	make_cla8();
+	circuit_design = make_cla8(16);
 	
 main();	

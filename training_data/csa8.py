@@ -3,7 +3,7 @@ import math
 sys.path.append("..")
 
 from model import params
-from gates import *
+from training_data.gates import *
 
 
 #This will be a 4:2 CSA datapath. This means we're gonna have two rows of paralel FA's
@@ -11,7 +11,7 @@ from gates import *
 #Basically the opposite of an RCA layout - super parallel and fast
 #Note: the output will be in carry-save format - not conventional binary
 
-def make_csa8():
+def make_csa8(y_max):
 
 	#This is a demo for the default gate if you want to see it
 	#test_gate = gate();
@@ -32,8 +32,8 @@ def make_csa8():
 	
 	##set global params to: X = 50, Y = 16 for condensed (and more parallel) grid space
 	
-	grid_y = 16;
-	grid_x = 40;
+	grid_y = 100*y_max;
+	grid_x = 100*y_max;
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
@@ -41,7 +41,7 @@ def make_csa8():
 	
 	#bookkeeping
 	gate_number = 1;
-	max_y = 6;
+	max_y = y_max;
 	current_y = 0;
 	current_x = 0;
 	
@@ -2309,8 +2309,8 @@ def make_csa8():
 	csa8[temppos[0]][temppos[1]] = OR32;
 	#######################################################
 	#######################################################
-	
-	print("CSA placed cell grid: ");
+	return csa8;
+	'''print("CSA placed cell grid: ");
 	print(csa8);
 	#get placed gate count - sanity checking grid for duplicates and misplaced gates
 	#there could still be typos - just fyi
@@ -2351,12 +2351,12 @@ def make_csa8():
 	if(duplicate_gate_count == 0):
 		print("no duplicates found! :DDDDDD");
 	else:
-		print("duplicates found :'(");
+		print("duplicates found :'(");'''
 
 #I like having a main method because I'm particular like that.
 #Also you scrolled down this far. Good on you.
 def main():
 
-	make_csa8();
+	circuit_design = make_csa8(16);
 	
 main();	

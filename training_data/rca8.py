@@ -3,10 +3,10 @@ import math
 sys.path.append("..")
 
 from model import params
-from gates import *
+from training_data.gates import *
 
 #RCA datapath is literally just 8 full adders in series
-def make_rca8():
+def make_rca8(y_max):
 
 	#This is a demo for the default gate if you want to see it
 	#test_gate = gate();
@@ -27,8 +27,8 @@ def make_rca8():
 	
 	##set global params to: X = 50, Y = 8 for condensed grid space
 	
-	grid_y = 8;
-	grid_x = 50;
+	grid_y = 100*y_max;
+	grid_x = 100*y_max;
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
@@ -36,7 +36,7 @@ def make_rca8():
 	
 	#bookkeeping
 	gate_number = 1;
-	max_y = 6;
+	max_y = y_max;
 	current_y = 0;
 	current_x = 0;
 	
@@ -1170,7 +1170,7 @@ def make_rca8():
 	#######################################################
 	#######################################################
 	
-	print("RCA placed cell grid: ");
+	'''print("RCA placed cell grid: ");
 	print(rca8);
 	#get placed gate count - sanity checking grid for duplicates and misplaced gates
 	#there could still be typos - just fyi
@@ -1211,12 +1211,13 @@ def make_rca8():
 	if(duplicate_gate_count == 0):
 		print("no duplicates found! :DDDDDD");
 	else:
-		print("duplicates found :'(");
+		print("duplicates found :'(");'''
+	return rca8;
 
 #I like having a main method because I'm particular like that.
 #Also you scrolled down this far. Good on you.
 def main():
 
-	make_rca8();
+	circuit_design = make_rca8(10);
 	
 main();	

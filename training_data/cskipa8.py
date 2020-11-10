@@ -3,7 +3,7 @@ import math
 sys.path.append("..")
 
 from model import params
-from gates import *
+from training_data.gates import *
 
 #The carry skip adder datapath is similar in implementation to an RCA.
 #The main difference is that the RCA datapath is broken up into sections 
@@ -15,7 +15,7 @@ from gates import *
 #This design will use 4-bit skip sections, since that's what is typical for low radix.
 #Also because I'm not a masochist.
 
-def make_cskipa8():
+def make_cskipa8(y_max):
 
 	#This is a demo for the default gate if you want to see it
 	#test_gate = gate();
@@ -36,8 +36,8 @@ def make_cskipa8():
 	
 	##set global params to: X = 50, Y = 8 for condensed grid space
 	
-	grid_y = 16;
-	grid_x = 50;
+	grid_y = 100*y_max;
+	grid_x = 100*y_max;
 	
 	#creating a grid data structure with the dimsions specified in params
 	#not using a dictionary because order is important for routing - fight me
@@ -45,7 +45,7 @@ def make_cskipa8():
 	
 	#bookkeeping
 	gate_number = 1;
-	max_y = 12;
+	max_y = y_max;
 	current_y = 0;
 	current_x = 0;
 	
@@ -1356,8 +1356,8 @@ def make_cskipa8():
 	cskipa8[temppos[0]][temppos[1]] = OR16;
 	#######################################################
 	#######################################################
-	
-	print("CSkipA placed cell grid: ");
+	return cskipa8;
+	'''print("CSkipA placed cell grid: ");
 	print(cskipa8);
 	#get placed gate count - sanity checking grid for duplicates and misplaced gates
 	#there could still be typos - just fyi
@@ -1398,12 +1398,12 @@ def make_cskipa8():
 	if(duplicate_gate_count == 0):
 		print("no duplicates found! :DDDDDD");
 	else:
-		print("duplicates found :'(");
+		print("duplicates found :'(");'''
 
 #I like having a main method because I'm particular like that.
 #Also you scrolled down this far. Good on you.
 def main():
 
-	make_cskipa8();
+    circuit_design = make_cskipa8(16);
 	
 main();	
