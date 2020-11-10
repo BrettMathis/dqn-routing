@@ -98,11 +98,7 @@ class net:
 
     # Shortest path from source to target vertex
     def shortest(self,v):
-        try:
-            return self.v[v][2]
-        except:
-            print(self)
-            raise
+        return self.v[v][2]
 
     # Modeling the impedance from source to target vertex
     # The impedance approximation is composed of two parts:

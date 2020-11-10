@@ -3,6 +3,7 @@
 import sys,math
 
 from model import params,net
+import numpy as np
 
 # Basically a 2-dimensional matrix
 class design:
@@ -32,6 +33,7 @@ class design:
         self.ydim=0
         self.nets={}
         self.active=[0,0]
+        self.switches=[]
         self.no_switch=False
 
         # Define grid itself
@@ -74,6 +76,9 @@ class design:
         
         # Iterate through net_dic
         for name,n in net_dic.items():
+            # If the net does not connect to anything:
+            if len(n)==1:
+                continue
             # Create net objects
             self.nets[name]=net.net(n)
             # Populate the grid object's net dict
@@ -94,39 +99,37 @@ class design:
         n_temp = self.nets[active_net]
         v_temp = 0
         self.active = [active_net,v_temp]
+        self.switches = self.switching_factor()
 
     def get_state(self):
         # State will be 3-dimensional matrix
         # One dimension is X
         # One dimension is Y
-        # Remaining dimension is "depth"
-        # "depth" is 2 * MM deep and records:
+        # Remaining dimension is Z
+        # Z is MM+1 + 1 deep and records:
         # - congestion on each layer (MM total entries)
-        # - number of vertices on each layer (MM total entries)
+        # - position of switch vectors (weighted by priority)
         # The latter is not technically needed, but
         # this is a neural network. That information can help it
         # figure out how switching works, since it actually sees
         # the vertices it can switch to.
         state=[[0 for j in range(self.ydim)] for i in range(self.xdim)]
+        parsed_switch = [x.split('%') for x in self.switches]
+        switch_loc = [self.nets[x[0]].v[int(x[1])][0:2] for x in parsed_switch]
+        active_loc = [self.nets[self.active[0]].v[self.active[1]][0:2]]
         for a in range(self.xdim):
             for b in range(self.ydim):
                 el = self.grid[a][b]
-                ndic = el[0]
-                ndic_parsed = {}
                 el_parsed = []
-                # Turn the 1st element of a grid square, {n -> [v]}
-                # Into a count of vertices per layer
-                for n,v in ndic.items():
-                    net_obj = self.nets[n]
-                    vertices = [net_obj.v[x] for x in v]
-                    for l in [x[-1] for x in vertices]:
-                        for k in l:
-                            ndic_parsed[k]=ndic_parsed.get(k,0)+1
                 for i in range(params.MM+1):
                     el_parsed.append(el[-1].get(i,0))
-                for i in range(params.MM+1):
-                    el_parsed.append(ndic_parsed.get(i,0))
+                el_parsed.append(0)
                 state[a][b]=el_parsed
+        for x in range(params.SN):
+            [a,b]=switch_loc[x]
+            state[a][b][-1]=(x+1)**2
+        for a,b in active_loc:
+            state[a][b][-1]=(params.SN+1)**2
         return state
 
     def do_action(self,raw_X,translate=True):
@@ -188,22 +191,7 @@ class design:
                 # If the vertex moved, modify the old vertex
                 if (not was_cloned) and (new_v[0]!=old_v[0] or new_v[1]!=old_v[1]):
                     tmp=self.grid[old_v[0]][old_v[1]][0][active_n]
-                    try:
-                        tmp.remove(old_n)
-                    except:
-                        for n12,n13 in self.nets.items():
-                            print(n12)
-                            print(n13)
-                        print(self.active)
-                        print(new_n,new_v)
-                        print(X)
-                        print(old_n,old_v)
-                        print(old_v[0],old_v[1])
-                        for x in self.grid:
-                            print(x)
-                        raise
-                        print(self.grid[3][3])
-                        print(self.grid[5][5])
+                    tmp.remove(old_n)
                     self.grid[old_v[0]][old_v[1]][0][active_n]=tmp
 
             # If we've fully routed a wire with this move
@@ -213,15 +201,7 @@ class design:
                 # Delete reference to the old vertex from the grid
                 [x,y]=old_v[:2]
                 tmp=self.grid[x][y][0][active_n]
-                try:
-                    tmp.remove(old_n)
-                except:
-                    for n12,n13 in self.nets.items():
-                        print(n12)
-                        print(n13)
-                    print(self.active)
-                    print(old_v)
-                    raise
+                tmp.remove(old_n)
                 self.grid[x][y][0][active_n]=tmp
 
             # If the net is completely routed (all wires)
@@ -258,18 +238,7 @@ class design:
                     [v1,v2,coords,Le]=net_obj.edict[v]
                     # Delete references to vertices in grid
                     tmp=self.grid[x][y][0][active_n]
-                    try:
-                        tmp.remove(v)
-                    except:
-                        for n12,n13 in self.nets.items():
-                            print(n12)
-                            print(n13)
-                        print(bad)
-                        print(self.active)
-                        print(v)
-                        print(x)
-                        print(y)
-                        raise
+                    tmp.remove(v)
                     self.grid[x][y][0][active_n]=tmp
                     # Delete congestion due to vertices
                     for l in Lv:
@@ -291,20 +260,22 @@ class design:
             # If the net is completely routed
             # JUMP
             if net_obj.all_done:
+                self.switches = self.switching_factor()
                 self.do_action(6)
                 return
         
         # Switch action
         if "switch" in X:
             dest = int(X.replace("switch",""))
-            switches = self.switching_factor()
-            switch = switches[dest]
-            self.active=switch.split('_')
+            switch = self.switches[dest]
+            self.active=switch.split('%')
             self.active[1]=int(self.active[1])
+            self.switches = self.switching_factor()
 
     def scale_congestion(self,state,x,y,L):
         cong=state[x][y][L]
-        ret=math.exp(cong/params.MT[L])-1
+        #ret=math.exp(cong/params.MT[L])-1
+        ret=params.CF(cong/params.MT[L])
         return ret
 
     def global_loss(self,state):
@@ -336,11 +307,11 @@ class design:
                     continue
                 if active_n==n_name and active_v==v_name:
                     continue
-                key=n_name+"_"+str(v_name)
+                key=n_name+'%'+str(v_name)
                 key_coords=v[:2]
                 ret[key]=n.loss()/max([net.Mdist(v_coords,key_coords),1])
         if ret=={}:
-            retl=[active_n+"_"+str(active_v)]*params.SN
+            retl=[active_n+'%'+str(active_v)]*params.SN
             self.no_switch=True
         else:
             retl = [k for k,v in sorted(ret.items(),key=lambda x: x[1])]
@@ -353,3 +324,12 @@ class design:
         if (self.no_switch and self.nets[self.active[0]].all_done):
             print("\n\nALL DONE\n\n")
         return self.no_switch and self.nets[self.active[0]].all_done
+
+    def visualize(self):
+        state=self.get_state()
+        ret=np.zeros((params.MM+1+1,self.ydim,self.xdim)).tolist()
+        for x in range(self.xdim):
+            for y in range(self.ydim):
+                for z in range(params.MM+1+1):
+                    ret[z][y][x]=state[x][y][z]
+        return ret

@@ -4,8 +4,10 @@ import sys
 sys.path.append("..")
 
 from model import design,net,params
-from training_data.gates import *
+from training_data import *
 from training_data.rca8 import *
+from training_data.rca4 import *
+from training_data.rca2 import *
 from training_data.csa8 import *
 from training_data.cskipa8 import *
 from training_data.cla8 import *
@@ -15,7 +17,7 @@ stdcells=[]
 nets=[]
 netlist=[]
 
-ref_design = make_csa8(10);
+ref_design = make_rca2(4);
 
 [DEF, stdcells, nets, netlist] = compile_design(ref_design);
 
@@ -42,5 +44,6 @@ print("nets: ");
 print(nets);
 print("netlist: ");
 print(netlist);
-
+print("total cells: ",len(DEF))
+print("total nets: ",len(nets))
 
