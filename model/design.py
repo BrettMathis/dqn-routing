@@ -153,9 +153,16 @@ class design:
         # I guess the NN can just shout into the void if it feels the need
         # I know routing can be pretty frustrating.
         if X in net_obj.valid_actions(active_v):
-            # Move, and store name and contents of new vertex
-            new_n,new_v=net_obj.move(active_v,X)
 
+        # Two things we need to do:
+        # 1) Update congestion
+        # 2) Update grid (which just holds vertex locations)
+        # 2 has to be done for both new vertex (2.a) and old vertex (2.b)
+
+            # Move, and store name and contents of new vertex
+            new_n,new_v,was_cloned=net_obj.move(active_v,X)
+
+            # 1)
             # Congestion ALWAYS increases
             # in new location
             # ONLY on active Layer
@@ -166,19 +173,39 @@ class design:
                 self.grid[new_v[0]][new_v[1]][-1][new_v[-2]]=tmp
                 del tmp
 
-            # Update new position with vertex, if vertex moved
+
+            # 2.a)
+            # Update position with new vertex
             tmp=self.grid[new_v[0]][new_v[1]][0].get(active_n,[])
             if new_n not in tmp:
                 tmp.append(new_n)
             self.grid[new_v[0]][new_v[1]][0][active_n]=tmp
             del tmp
 
+            # 2.b)
+            # If we haven't fully routed a wire with this move
             if not (new_n in net_obj.close and net_obj.done[new_n]):
                 # If the vertex moved, modify the old vertex
-                if len(old_v[-1])==1 and X not in ['up','down']:
+                if (not was_cloned) and (new_v[0]!=old_v[0] or new_v[1]!=old_v[1]):
                     tmp=self.grid[old_v[0]][old_v[1]][0][active_n]
-                    tmp.remove(old_n)
+                    try:
+                        tmp.remove(old_n)
+                    except:
+                        for n12,n13 in self.nets.items():
+                            print(n12)
+                            print(n13)
+                        print(self.active)
+                        print(new_n,new_v)
+                        print(X)
+                        print(old_n,old_v)
+                        print(old_v[0],old_v[1])
+                        for x in self.grid:
+                            print(x)
+                        raise
+                        print(self.grid[3][3])
+                        print(self.grid[5][5])
                     self.grid[old_v[0]][old_v[1]][0][active_n]=tmp
+
             # If we've fully routed a wire with this move
             else:
                 # Delete the old vertex
@@ -186,12 +213,30 @@ class design:
                 # Delete reference to the old vertex from the grid
                 [x,y]=old_v[:2]
                 tmp=self.grid[x][y][0][active_n]
-                tmp.remove(old_n)
+                try:
+                    tmp.remove(old_n)
+                except:
+                    for n12,n13 in self.nets.items():
+                        print(n12)
+                        print(n13)
+                    print(self.active)
+                    print(old_v)
+                    raise
                 self.grid[x][y][0][active_n]=tmp
 
-            # If the net is completely routed, we have to trim
+            # If the net is completely routed (all wires)
+            # We have to trim
+            # TO-DO: TRIM VIAS
             if net_obj.all_done:
-                print('all done debugging statement')
+#                print('ALL DONE\n')
+#                if net_obj.v[0][0:2]==[0,0]:
+#                    assert net_obj.v[1][0:2]==[5,5]
+#                if net_obj.v[0][0:2]==[5,5]:
+#                    assert net_obj.v[1][0:2]==[3,3]
+#                if net_obj.v[0][0:2]==[3,3]:
+#                    assert net_obj.v[1][0:2]==[0,0]
+#                    assert net_obj.v[2][0:2]==[5,5]
+#                print('ALL DONE\n')
                 # Figure out which vertices are not superfluous
                 vital=[]
                 # Recurse backwards from sink port
@@ -209,23 +254,34 @@ class design:
                 bad = [v for v in net_obj.v if v not in vital]
 
                 for v in bad:
-                    [x,y,_,_,L]=net_obj.v[v]
-                    # Delete vertices
-                    del net_obj.v[v]
+                    [x,y,_,_,Lv]=net_obj.v[v]
+                    [v1,v2,coords,Le]=net_obj.edict[v]
                     # Delete references to vertices in grid
                     tmp=self.grid[x][y][0][active_n]
-                    tmp.remove(v)
+                    try:
+                        tmp.remove(v)
+                    except:
+                        for n12,n13 in self.nets.items():
+                            print(n12)
+                            print(n13)
+                        print(bad)
+                        print(self.active)
+                        print(v)
+                        print(x)
+                        print(y)
+                        raise
                     self.grid[x][y][0][active_n]=tmp
                     # Delete congestion due to vertices
-                    for l in L:
+                    for l in Lv:
                         self.grid[x][y][-1][l]-=1
-                    # Delete edges
-                    [v1,v2,coords,L]=net_obj.edict[v]
-                    del net_obj.edict[v]
                     # Delete congestion due to edges
                     for (a,b) in coords[1:-1]:
                         if (a,b)!=(x,y):
-                            self.grid[a][b][-1][L]-=1
+                            self.grid[a][b][-1][Le]-=1
+                    # Delete vertices
+                    del net_obj.v[v]
+                    # Delete edges
+                    del net_obj.edict[v]
 
             # Switch active to new vertex
             self.active=[active_n,new_n]
@@ -294,4 +350,6 @@ class design:
         return retl
 
     def done(self):
+        if (self.no_switch and self.nets[self.active[0]].all_done):
+            print("\n\nALL DONE\n\n")
         return self.no_switch and self.nets[self.active[0]].all_done

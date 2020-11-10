@@ -60,6 +60,7 @@ class net:
 #        self.e=[]
         self.edict={}
         self.close={}
+        self.Tshape={0}
         self.p=0
         self.k=[]
         self.next_name=0
@@ -187,13 +188,15 @@ class net:
 #        prev_e = self.edict.get(v,[0,0,[],0])
 
         # Explained later
-        needs_clone=False
+        needs_clone=(v in self.Tshape)
 
         # If we can extend the edge
-        can_extend = (len(L)==1 or man_dir in ['up','down'])
+        needs_clone = needs_clone or (len(L)>1)
+        # Code written this way for clarity:
+        if man_dir in ['up','down']:
+            needs_clone=False
 #        if prev_e[-1] == aL or man_dir in ['up','down']:
-        if can_extend:
-        # Just move the vertex :)
+        if not needs_clone:
 
             # If this vertex was in the self.close dict
             # We need to take some special care
@@ -206,31 +209,34 @@ class net:
             # We don't need to update the vertex index; only the clone moves
             # We don't need to update the distance because it auto-updates
 
-
+            # Cases 1 and 2
             for a,b in self.close.items():
                 # Check if vertex in self.close dict
+                # aka case 3 vs others
                 if b[0]==v:
                     # Check if vertex moves closer or further
                     new_dist = Mdist([X,Y],self.v[a][0:2])
                     old_dist = Mdist(self.v[self.close[a][0]],self.v[a][0:2])
                         # Vertical distance
                     new_dist += max([0,L[0]-1])
+                    # If true, case 2
+                    # If false, case 1
                     needs_clone = needs_clone or new_dist>old_dist
 
         # Just move the vertex :)
-            if not needs_clone:
-                new_name=v
-                self.v[v]=[X,Y,dist,aL,L]
-                # Add new grid square to edge
-                if man_dir not in ['up','down']:
-                    prev_e=self.edict[v]
-                    tmp=prev_e[-2]
-                    tmp.append([X,Y])
-                    prev_e[-2]=tmp
-                    self.edict[v]=prev_e
+        # If case 1 or case 3
+        if not needs_clone:
+            new_name=v
+            self.v[v]=[X,Y,dist,aL,L]
+            # Add new grid square to edge
+            if man_dir not in ['up','down']:
+                prev_e=self.edict[v]
+                tmp=prev_e[-2]
+                tmp.append([X,Y])
+                prev_e[-2]=tmp
+                self.edict[v]=prev_e
 
-        print(needs_clone)
-        if needs_clone or not can_extend:
+        if needs_clone:
         # If we cannot extend the edge, make a new vertex and edge
             # 1 of 1 places where new v are made
             new_name=self._make_v([X,Y,dist,aL,[aL]])
@@ -238,42 +244,33 @@ class net:
             # 1 of 1 places where new e are made
             self._make_e([v,new_name,[[origX,origY],[X,Y]],aL])
 
+            # Need to mark previous vertex as immobile
+            # Maybe this solution could use work
+            self.Tshape.add(v)
+
         # Update self.close
         for a in self.close:
-            new_dist = Mdist([X,Y],self.v[a][0:2])
+            #new_dist = Mdist([self.v],self.v[a][0:2])
+            new_dist = Mdist(self.v[new_name][0:2],self.v[a][0:2])
             old_dist = Mdist(self.v[self.close[a][0]],self.v[a][0:2])
-            # Vertical distance
+                # Vertical distance
             new_dist += max([0,L[0]-1])
             if new_dist < old_dist:
                 self.close[a]=[new_name,new_dist]
             if new_dist==0:
                 self.done[a]=True
-                self.v[a]=self.v[v]
-                self.edict[a]=self.edict[v]
-                self.edict[a][1]=a
-                self.v[a][-1]=[0]+self.v[a][-1]
+                self.Tshape.add(new_name)
                 self.close[a]=[a,0]
-                print('deleting')
-                print(v)
-                print(self.edict[v])
-                print(self.close)
-                del self.edict[v]
-                #del self.v[v]
+                self.edict[a]=[new_name,a,[[X,Y]],0]
+                self.v[a][2]=self.v[v][2]
+#                self.v[a]=self.v[v]
+#                self.edict[a]=self.edict[v]
+#                self.edict[a][1]=a
+#                self.v[a][-1]=[0]+self.v[a][-1]
+#                del self.edict[v]
+#                #del self.v[v]
                 if False not in self.done.values():
                     self.all_done=True
-                new_name=a
+#                new_name=a
 
-        return (new_name,self.v[new_name])
-
-    def N(self,v):
-        return self.move(v,'N')
-    def S(self,v):
-        return self.move(v,'S')
-    def W(self,v):
-        return self.move(v,'W')
-    def E(self,v):
-        return self.move(v,'E')
-    def up(self,v):
-        return self.move(v,'up')
-    def down(self,v):
-        return self.move(v,'down')
+        return (new_name,self.v[new_name],needs_clone)

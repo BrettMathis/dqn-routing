@@ -97,12 +97,19 @@ des.do_action(2)
 
 print(des.active)
 
+#for x in des.grid:
+#    print(x)
+
+#for k,v in des.nets.items():
+#    print(k)
+#    print(v)
+
 # Check net1 is finished
 assert(des.nets["net1"].all_done)
 
 # Check clean-up was done properly
 for x in des.nets["net1"].v:
-    assert(x in [0,1])
+    assert(x in [0,1,2])
 
 # Check net1 can no longer be switched to
 for x in des.switching_factor():
@@ -116,8 +123,5 @@ for x in state:
         assert(y[2]==0)
         assert(y[2+params.MM+1]==0)
 
-for k,v in des.nets.items():
-    print(k)
-    print(v)
 
 print(des.global_loss(state))
